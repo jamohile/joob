@@ -1,3 +1,6 @@
+import { DataToPromise } from "./types";
+import { JobParams } from "./Job";
+
 export { Queue } from "./Queue";
 export { Job, Events as JobEvents } from "./Job";
 export { Operation, Events as OperationEvents } from "./Operation";

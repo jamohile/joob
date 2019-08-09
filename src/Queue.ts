@@ -16,6 +16,8 @@ export class Queue {
   currentJob: undefined | Job;
   events: EventEmitter;
 
+  private jobIndex: {[key: string]: Job} = {};
+
   constructor() {
     this.queuedJobs = [];
     this.completedJobs = [];
@@ -25,11 +27,14 @@ export class Queue {
   }
 
   /** Add a new job to the queue. */
-  queueJob(job: Job): boolean {
+  queueJob(job: Job): Promise<string> {
     this.queuedJobs.push(job);
+    this.jobIndex[job.name] = job;
     // This will check to make sure nothing is running right now.
     this.startNextJob();
-    return true;
+    return new Promise((resolve, reject) => {
+      job.onComplete(resolve);
+    });
   }
 
   /** Whether a job is currently executing. */

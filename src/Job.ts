@@ -1,7 +1,7 @@
 import EventEmitter from "events";
 import { DataToPromise, DataToId } from "./types";
 import { Operation, Events as OperationEvents } from "./Operation";
-import { STATUSES } from "./index";
+import { STATUSES, JobEvents } from "./index";
 
 export const Events = {
   JOB_STARTED: "JOB_STARTED",
@@ -15,13 +15,7 @@ export const Events = {
  *
  */
 
-interface JobParams {
-  /** A unique name for this job. */
-  name: string;
-  /** A function that maps an arbitrary piece of data to a promise for execution. */
-  resolver: DataToPromise;
-  /** An array of data elements, each one will be an operation. */
-  data: any[];
+export interface JobParams {
   /** A function to map each data element to an ID used to identify the operation*/
   dataToId: DataToId;
   /** Maximum operations we can run at one time. */
@@ -81,17 +75,23 @@ export class Job {
   completedOperations: Operation[] = [];
 
   events: EventEmitter;
+  on: any;
 
-  constructor({
-    name,
-    resolver,
-    data,
-    dataToId = d => d.id,
-    maxConcurrentOperations = 1,
-    maxFailuresPerOperation = 1,
-    cooldown = 0,
-    throttle = 500
-  }: JobParams) {
+  constructor(
+    /** A unique name for this job. */
+    name: string,
+    /** A function that maps an arbitrary piece of data to a promise for execution. */
+    resolver: DataToPromise,
+    /** An array of data elements, each one will be an operation. */
+    data: any[],
+    {
+      dataToId = d => d.id,
+      maxConcurrentOperations = 1,
+      maxFailuresPerOperation = 1,
+      cooldown = 0,
+      throttle = 500
+    }: JobParams
+  ) {
     this.name = name;
     this.resolver = resolver;
     this.data = data;
@@ -107,9 +107,9 @@ export class Job {
     /**
      * We convert the input set of data into a set of operations that can be executed.
      */
-    this.queuedOperations = data.map((d: any) => {
-      const id = dataToId(d);
-      const operation = new Operation(dataToId(d), resolver, d);
+    this.queuedOperations = data.map((d: any, index: number) => {
+      const id = dataToId(d, index);
+      const operation = new Operation(id, resolver, d);
       this.operationIndex[id] = operation;
       return operation;
     });
@@ -132,8 +132,16 @@ export class Job {
     this.emit(Events.JOB_STARTED);
     this.startNextOperation();
     return new Promise((resolve, reject) => {
-      this.events.on(Events.JOB_COMPLETED, resolve);
+      this.onComplete(resolve);
     });
+  }
+
+  /** These just wrap the event handler. */
+  onComplete(handler: (name: string) => void) {
+    this.events.once(Events.JOB_COMPLETED, handler);
+  }
+  onStart(handler: (name: string) => void) {
+    this.events.once(Events.JOB_STARTED, handler);
   }
 
   /**
@@ -264,8 +272,8 @@ export class Job {
   export() {
     return {
       name: this.name,
-      operations: [...this.completedOperations, ...this.queuedOperations].map(
-        operation => operation.export()
+      operations: Object.values(this.operationIndex).map(operation =>
+        operation.export()
       )
     };
   }

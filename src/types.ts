@@ -7,4 +7,4 @@ export type DataToPromise = (data: any) => Promise<any>;
 /**
  * Maps some data to an ID so we can make an identifiable operation for it.
  */
-export type DataToId = (data: any) => string | number;
+export type DataToId = (data: any, index: number) => string | number;
