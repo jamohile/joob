@@ -1,5 +1,7 @@
 const { Queue, Job, JobEvents, OperationEvents } = require("./dist");
-const q = new Queue();
+const q = new Queue({
+  exportCompletedJobsDir: "my-logs"
+});
 
 const data = [1, 2, 3];
 

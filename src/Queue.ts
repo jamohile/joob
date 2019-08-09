@@ -1,5 +1,6 @@
+import fs from "fs";
 import { Job, Events as JobEvents } from "./Job";
-import {Events as OperationEvents} from "./Operation";
+import { Events as OperationEvents } from "./Operation";
 import { EventEmitter } from "events";
 /**
  * The highest level of job-containerization for a process.
@@ -10,18 +11,28 @@ import { EventEmitter } from "events";
  * For now, jobs are execute synchronously.
  */
 
+export interface QueueParams {
+  /** An optional directory to output completed jobs. */
+  exportCompletedJobsDir: undefined | string;
+}
+
 export class Queue {
   private queuedJobs: Job[];
   private completedJobs: Job[];
   currentJob: undefined | Job;
   events: EventEmitter;
 
-  private jobIndex: {[key: string]: Job} = {};
+  private jobIndex: { [key: string]: Job } = {};
 
-  constructor() {
+  exportCompletedJobsDir: undefined | string;
+
+  constructor({ exportCompletedJobsDir = undefined }: QueueParams) {
     this.queuedJobs = [];
     this.completedJobs = [];
     this.currentJob = undefined;
+
+    this.exportCompletedJobsDir = exportCompletedJobsDir;
+    this.makeExportDirIfNeeded();
 
     this.events = new EventEmitter();
   }
@@ -33,7 +44,12 @@ export class Queue {
     // This will check to make sure nothing is running right now.
     this.startNextJob();
     return new Promise((resolve, reject) => {
-      job.onComplete(resolve);
+      job.onComplete((...args) => {
+        // Respond to listeners.
+        resolve(...args);
+
+        this.exportJobIfNeeded(job);
+      });
     });
   }
 
@@ -71,12 +87,30 @@ export class Queue {
     this.startNextJob();
   }
 
-  forwardJobEvents(job: Job){
-    const combinedEvents = {...OperationEvents, ...JobEvents}
-    for(let event in combinedEvents){
+  forwardJobEvents(job: Job) {
+    const combinedEvents = { ...OperationEvents, ...JobEvents };
+    for (let event in combinedEvents) {
       job.events.on(event, (...args) => {
-        this.events.emit(event, ...args)
-      })
+        this.events.emit(event, ...args);
+      });
+    }
+  }
+
+  makeExportDirIfNeeded() {
+    if (this.exportCompletedJobsDir) {
+      if (!fs.existsSync(this.exportCompletedJobsDir)) {
+        fs.mkdirSync(this.exportCompletedJobsDir);
+      }
+    }
+  }
+
+  exportJobIfNeeded(job: Job) {
+    if (this.exportCompletedJobsDir) {
+      fs.writeFile(
+        `${this.exportCompletedJobsDir}/${job.name}.json`,
+        JSON.stringify(job.export(), null, 2),
+        () => {}
+      );
     }
   }
 }
