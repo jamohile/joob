@@ -1,6 +1,6 @@
 {
   "name": "joob",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "A flexible library to create, execute, and monitor batch operations of any kind.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
