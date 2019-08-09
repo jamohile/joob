@@ -1,5 +1,6 @@
 >**Note**: this package is stable, but documentation is a work in progress.
-<img src="./static/logo.png">
+
+<img src="https://raw.githubusercontent.com/jamohile/joob/master/static/logo.png"/>
 
 ## What's Joob?
 Joob is a package to run batch jobs. Say you have an app that lets a user request your server to:
