@@ -31,6 +31,10 @@ export class Operation {
   /** An internal method used to actually create the request promise. */
   private execute: () => Promise<any>;
 
+  // time in milliseconds
+  startTime: number;
+  timeTaken: number;
+
   /**
    *
    * @param id - The unique identifier for this operation.
@@ -56,19 +60,21 @@ export class Operation {
       return;
     }
     this.status = STATUSES.STARTED;
+    this.startTime = new Date().valueOf();
     this.emit(Events.OPERATION_STARTED);
 
     this.execute()
       .then(result => {
         this.status = STATUSES.COMPLETED;
         this.result = result;
+        this.timeTaken = new Date().valueOf() - this.startTime;
         this.emit(Events.OPERATION_COMPLETED);
       })
       .catch(error => {
         this.status = STATUSES.FAILED;
         this.result = error;
         this.timesFailed += 1;
-        this.emit(Events.OPERATION_FAILED);
+        this.timeTaken = new Date().valueOf() - this.startTime;
         this.emit(Events.OPERATION_FAILED);
       });
   }
@@ -80,12 +86,14 @@ export class Operation {
 
   /** Exports this class object to a JSON object */
   export() {
-    const { id, data, status, result } = this;
+    const { id, data, status, result, startTime, timeTaken } = this;
     return {
       id,
       data,
       status,
-      result
+      result,
+      startTime,
+      timeTaken
     };
   }
 }

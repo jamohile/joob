@@ -1,3 +1,4 @@
+import fs from "fs";
 import EventEmitter from "events";
 import { DataToPromise, DataToId } from "./types";
 import { Operation, Events as OperationEvents } from "./Operation";
@@ -77,6 +78,10 @@ export class Job {
   events: EventEmitter;
   on: any;
 
+  startTime: number = 0;
+  effectiveTimePerOperation: number = 0;
+  estimatedTimeRemaining: number = 0;
+
   constructor(
     /** A unique name for this job. */
     name: string,
@@ -89,7 +94,8 @@ export class Job {
       maxConcurrentOperations = 1,
       maxFailuresPerOperation = 1,
       cooldown = 0,
-      throttle = 500
+      throttle = 500,
+      logWhenCompletedDir = undefined
     }: JobParams
   ) {
     this.name = name;
@@ -129,6 +135,7 @@ export class Job {
       return undefined;
     }
     this.status = STATUSES.STARTED;
+    this.startTime = (new Date()).valueOf()
     this.emit(Events.JOB_STARTED);
     this.startNextOperation();
     return new Promise((resolve, reject) => {
@@ -249,12 +256,16 @@ export class Job {
    * @param final - If false, the operation will be retried.
    */
   private handleOperationComplete(id: number | string, final: boolean) {
+    const operation = this.currentOperations[id];
     /** Only consider it completed if we're not gonna try again. */
     if (final) {
-      this.completedOperations.push(this.currentOperations[id]);
+      this.completedOperations.push(operation);
+      this.effectiveTimePerOperation = ((new Date()).valueOf() - this.startTime) / this.completedOperations.length;
     }
     delete this.currentOperations[id];
     this.numCurrentOperations -= 1;
+    this.estimatedTimeRemaining = this.effectiveTimePerOperation * (this.queuedOperations.length + this.numCurrentOperations);
+
     this.startNextOperation();
   }
 
@@ -272,6 +283,10 @@ export class Job {
   export() {
     return {
       name: this.name,
+      startTime: this.startTime,
+      effectiveTimePerOperation: this.effectiveTimePerOperation,
+      estimatedTimeRemaining: this.estimatedTimeRemaining,
+      operationsCompleted: this.completedOperations.length,
       operations: Object.values(this.operationIndex).map(operation =>
         operation.export()
       )

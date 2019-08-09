@@ -1,29 +1,27 @@
 const { Queue, Job, JobEvents, OperationEvents } = require("./dist");
-
 const q = new Queue();
 
-const job = new Job(
-  "My Job",
-  d => {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        if (d !== 3) {
-          resolve("Yay: " + d);
-        } else {
-          reject("NOO: " + d);
-        }
-      }, 100);
-    });
-  },
-  [1, 2, 3],
-  {
-    dataToId: d => d,
-    maxConcurrentOperations: 2,
-    maxFailuresPerOperation: 2,
-    cooldown: 200,
-    throttle: 100
-  }
-);
+const data = [1, 2, 3];
+
+function myFunction(data) {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      if (data !== 3) {
+        resolve("Yoo: " + data);
+      } else {
+        reject("Noo: " + data);
+      }
+    }, 1000);
+  });
+}
+
+const job = new Job("My Job", myFunction, data, {
+  dataToId: d => d,
+  maxConcurrentOperations: 2,
+  maxFailuresPerOperation: 2,
+  cooldown: 200,
+  throttle: 100
+});
 
 q.events.on(JobEvents.JOB_COMPLETED, name => {
   console.log(`${name} complete.`);
