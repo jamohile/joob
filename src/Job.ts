@@ -94,8 +94,7 @@ export class Job {
       maxConcurrentOperations = 1,
       maxFailuresPerOperation = 1,
       cooldown = 0,
-      throttle = 500,
-      logWhenCompletedDir = undefined
+      throttle = 500
     }: JobParams
   ) {
     this.name = name;

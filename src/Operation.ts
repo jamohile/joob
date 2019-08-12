@@ -32,8 +32,8 @@ export class Operation {
   private execute: () => Promise<any>;
 
   // time in milliseconds
-  startTime: number;
-  timeTaken: number;
+  startTime: number = 0;
+  timeTaken: number = 0;
 
   /**
    *
