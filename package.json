@@ -1,6 +1,6 @@
 {
   "name": "joob",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "A flexible library to create, execute, and monitor batch operations of any kind.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -9,7 +9,13 @@
     "build-dev": "tsc --watch"
   },
   "homepage": "https://github.com/jamohile/joob#readme",
-  "keywords": ["jobs", "batch", "server", "operations", "async"],
+  "keywords": [
+    "jobs",
+    "batch",
+    "server",
+    "operations",
+    "async"
+  ],
   "author": "Jay Mohile",
   "license": "MIT",
   "devDependencies": {
