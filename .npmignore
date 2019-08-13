@@ -2,3 +2,5 @@
 node_modules
 src
 tsconfig.json
+test.js
+test-network.js
