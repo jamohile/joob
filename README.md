@@ -175,6 +175,7 @@ const job = new Job(
     dataToPromise,
     dataArray,
     {
+      meta: {type: "My Job Type"},
       dataToId = (data, index) => d.id,
       maxConcurrentOperations = 1,
       maxFailuresPerOperation = 1,
@@ -188,11 +189,14 @@ const job = new Job(
 
 A function that returns a unique for each element of data. This can be anything, but no two operations in the same job should have the same id.
 
-##### Possible IDs
+##### Some possible IDs
 
 - Database key
 - File name
 - Array index
+
+#### meta
+An object with arbitrary information about your job, that might be useful when exported.
 
 #### maxConcurrentOperations
 

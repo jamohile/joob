@@ -17,6 +17,8 @@ export const Events = {
  */
 
 export interface JobParams {
+  /** An object containing arbitrary metadata for this job.  */
+  meta: object;
   /** A function to map each data element to an ID used to identify the operation*/
   dataToId: DataToId;
   /** Maximum operations we can run at one time. */
@@ -38,6 +40,9 @@ export class Job {
 
   /** An array of data elements, each one will be a request. */
   data: any[];
+
+  /** An object containing arbitrary metadata for this job.  */
+  meta: object;
 
   /** A map of id:operation of operations currently being run. */
   currentOperations: { [key: string]: Operation } = {};
@@ -90,6 +95,7 @@ export class Job {
     /** An array of data elements, each one will be an operation. */
     data: any[],
     {
+      meta = {},
       dataToId = d => d.id,
       maxConcurrentOperations = 1,
       maxFailuresPerOperation = 1,
@@ -100,6 +106,7 @@ export class Job {
     this.name = name;
     this.resolver = resolver;
     this.data = data;
+    this.meta = meta;
 
     this.maxConcurrentOperations = maxConcurrentOperations;
     this.maxFailuresPerOperation = maxFailuresPerOperation;
@@ -257,9 +264,10 @@ export class Job {
   private handleOperationComplete(id: number | string, final: boolean) {
     const operation = this.currentOperations[id];
     /** Only consider it completed if we're not gonna try again. */
+    const elapsedTime = (new Date()).valueOf() - this.startTime;
     if (final) {
       this.completedOperations.push(operation);
-      this.effectiveTimePerOperation = ((new Date()).valueOf() - this.startTime) / this.completedOperations.length;
+      this.effectiveTimePerOperation = elapsedTime / this.completedOperations.length;
     }
     delete this.currentOperations[id];
     this.numCurrentOperations -= 1;
@@ -282,6 +290,7 @@ export class Job {
   export() {
     return {
       name: this.name,
+      meta: this.meta,
       startTime: this.startTime,
       effectiveTimePerOperation: this.effectiveTimePerOperation,
       estimatedTimeRemaining: this.estimatedTimeRemaining,
