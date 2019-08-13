@@ -1,8 +1,11 @@
->**Note**: this package is stable, but documentation is a work in progress.
+> **Note**: this package is stable, but documentation is a work in progress.
 
 <img src="https://raw.githubusercontent.com/jamohile/joob/master/static/logo.png"/>
 
+[![NPM](https://nodei.co/npm/joob.png?compact=true)](https://nodei.co/npm/joob/)
+
 ## What's Joob?
+
 Joob is a package to run batch jobs. Say you have an app that lets a user request your server to:
 
 - Process lots of files.
@@ -21,16 +24,6 @@ Joob lets you add **jobs** (batches) which contain multiple **operations** (indi
 
 Joob provides a flexible and robust API to solve each of these headaches and others.
 
-## Installation
-
-Joob is extremely lightweight and contains no external dependencies.
-
-```bash
-npm install joob
-```
-
-If you use typescript, joob also has full typings.
-
 ## Usage
 
 We'll demonstrate how to use Joob by making a simple script to scrape a bunch of URLs.
@@ -47,7 +40,7 @@ const request = require("request");
 Each batch of work we want to perform is called a **Job**. Multiple jobs are added to a **Queue**. If you only need to perform one type of job, a single queue should be enough.
 
 ```javascript
-const queue = new Queue();
+const queue = new Queue({});
 ```
 
 Now, the goal of our example app is to ping a bunch of websites.
@@ -89,7 +82,9 @@ const job = new Job("My First Job", visitSite, sites);
 
 queue.queueJob(job);
 
-// At any time while the job is pending, running, or completed
+/* At any time while the job is pending, running, or completed
+ * This gives you information about job status, the operations it contains, and important metrics.
+ */
 const data = job.export();
 ```
 
@@ -165,6 +160,7 @@ Emitted if an operation throws an error, it may be retried.
 ## Advanced Use
 
 ### Options
+
 When creating a job, we passed in something like this.
 
 ```javascript
@@ -187,22 +183,79 @@ const job = new Job(
     }
 );
 ```
+
 #### dataToId
-A function that returns a unique for each element of data. This can be anything, but no two operations in the same job should have the same id. 
+
+A function that returns a unique for each element of data. This can be anything, but no two operations in the same job should have the same id.
+
 ##### Possible IDs
-* Database key
-* File name
-* Array index
+
+- Database key
+- File name
+- Array index
 
 #### maxConcurrentOperations
+
 The maximum operations we can run in parallel.
 
 #### maxFailuresPerOperation
+
 The maximum number of times an operation can fail and still be retried.
 
 #### cooldown
+
 A delay before each operation is started.
 
 #### throttle
+
 A delay imposed only on operations that are being retried after failure.
 
+### Persisting Completed Jobs
+
+Right now, all jobs are cleared if you restart the server. This isn't great for an app where your users can see jobs that are already done, at any time in the future.
+
+We created a queue using the following.
+
+```
+const queue = new Queue({});
+```
+
+We can pass options into the queue, in this case, a directory to save the exported JSON from completed jobs.
+
+```
+const queue = new Queue({
+  persistCompletedJobsToDir: "./COMPLETED_JOBS_DIR"
+});
+```
+
+Now, whenever a job is completed, it will be stored here.
+
+To work with these stored jobs, Joob adds a few methods to the queue.
+
+#### hasJob(name, includePersisted?)
+
+Whether a given job (by name) is (or has been) in the queue. If `includePersisted` is true, both in-memory and previously saved jobs will be checked, otherwise only in-memory.
+
+Return true or false.
+
+```javascript
+const hasJob = await queue.hasJob(name, includePersisted?)
+```
+
+#### getJobExport(name, includePersisted?)
+
+Get the exported JSON for a job by name. If `includePersisted` is true, previously saved jobs are included.
+
+If the job doesn't exist, the promise will be rejected.
+
+```javascript
+const jobJSON = await queue.hasJob(name, includePersisted?)
+```
+
+#### getAllJobs(includePersisted?)
+
+Gets the names of all jobs. If `includePersisted` is true, previously saved jobs are included.
+
+```javascript
+const jobNames = await queue.getAllJobs(includePersisted?)
+```
