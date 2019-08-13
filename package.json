@@ -8,6 +8,7 @@
     "build": "tsc",
     "build-dev": "tsc --watch"
   },
+  "homepage": "https://github.com/jamohile/joob#readme",
   "keywords": ["jobs", "batch", "server", "operations", "async"],
   "author": "Jay Mohile",
   "license": "MIT",
