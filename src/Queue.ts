@@ -169,7 +169,7 @@ export class Queue {
         reject(new Error("Job not found."));
       }
       if (this.jobIndex[name]) {
-        return this.jobIndex[name].export();
+        resolve(this.jobIndex[name].export());
       }
       if (includePersisted) {
         if (!this.persistCompletedJobsToDir) {
