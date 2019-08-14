@@ -290,6 +290,7 @@ export class Job {
   export() {
     return {
       name: this.name,
+      status: this.status,
       meta: this.meta,
       startTime: this.startTime,
       effectiveTimePerOperation: this.effectiveTimePerOperation,
